@@ -2,9 +2,43 @@ app:
   rabbitmq:
     retry-delay-ms: 5000
 
-spring:
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: rabbit
-    password: rabbit
+  docker:
+    compose:
+      # Arquivo localizado na raiz do projeto.
+      file: docker-compose.yml
+
+      # Sobe o RabbitMQ com a aplicação e para ao encerrar a JVM.
+      lifecycle-management: start-and-stop
+
+      readiness:
+        # Tempo máximo para aguardar o healthcheck do container.
+        timeout: 30s
+
+rabbitmq:
+  # Estas propriedades funcionam como fallback.
+  # Durante o desenvolvimento, o Docker Compose Service Connection
+  # pode sobrescrevê-las automaticamente.
+  host: ${RABBITMQ_HOST:localhost}
+  port: ${RABBITMQ_PORT:5672}
+  username: ${RABBITMQ_USERNAME:rabbitrescue}
+  password: ${RABBITMQ_PASSWORD:rabbitrescue}
+  virtual-host: ${RABBITMQ_VHOST:rabbitrescue}
+
+  # Confirma se o broker recebeu realmente a publicação.
+  publisher-confirm-type: correlated
+
+  # Permite detectar mensagens que não encontraram nenhuma fila.
+  publisher-returns: true
+
+  template:
+    mandatory: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+  endpoint:
+    health:
+      show-details: always
