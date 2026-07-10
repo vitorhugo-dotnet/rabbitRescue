@@ -1,35 +1,25 @@
 services:
   rabbitmq:
-    # Versão fixada para evitar que um "latest" aleatório destrua a sexta-feira.
-    image: rabbitmq:4.3.2-management-alpine
-
-    hostname: rabbitrescue-rabbitmq
+    image: rabbitmq:4-management
     container_name: rabbitrescue-rabbitmq
 
     environment:
-      # Credenciais exclusivamente para desenvolvimento local.
       RABBITMQ_DEFAULT_USER: rabbitrescue
       RABBITMQ_DEFAULT_PASS: rabbitrescue
       RABBITMQ_DEFAULT_VHOST: rabbitrescue
 
     ports:
-      # Porta AMQP utilizada pela aplicação Spring.
       - "5672:5672"
-
-      # Interface web administrativa do RabbitMQ.
       - "15672:15672"
 
     volumes:
-      # Preserva filas, exchanges e mensagens entre reinicializações.
-      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq-data:/var/lib/rabbitmq
 
     healthcheck:
-      # O Spring Boot aguarda o broker ficar saudável antes de iniciar totalmente.
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 5s
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 10s
+      retries: 5
 
 volumes:
-  rabbitmq_data:
+  rabbitmq-data:
