@@ -6,7 +6,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: rabbitrescue
       RABBITMQ_DEFAULT_PASS: rabbitrescue
-      RABBITMQ_DEFAULT_VHOST: rabbitrescue
 
     ports:
       - "5672:5672"

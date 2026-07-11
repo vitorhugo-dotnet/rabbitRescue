@@ -1,47 +1,35 @@
-app:
-  rabbitmq:
-    retry-delay-ms: 5000
+rabbit-rescue:
+  messaging:
+    # Tempo que a mensagem permanece na fila de retry.
+    retry-delay: 5s
 
+    # Total de processamentos, incluindo a primeira tentativa.
+    max-attempts: 3
+
+    # Máximo de mensagens retornadas ao consultar a DLQ.
+    dead-letter-browse-limit: 100
+
+spring:
   docker:
     compose:
-      # Arquivo localizado na raiz do projeto.
       file: docker-compose.yml
-
-      # Sobe o RabbitMQ com a aplicação e para ao encerrar a JVM.
       lifecycle-management: start-and-stop
 
       readiness:
-        # Tempo máximo para aguardar o healthcheck do container.
         timeout: 30s
 
-rabbitmq:
-  messaging:
-    # Tempo que a mensagem permanece na fila de retry antes de voltar.
-    retry-delay: 5s
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:rabbitrescue}
+    password: ${RABBITMQ_PASSWORD:rabbitrescue}
+    virtual-host: ${RABBITMQ_VHOST:/}
 
-    # Total de processamentos, contando a primeira tentativa.
-    max-attempts: 3
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
-    # Quantidade máxima de mensagens retornadas ao consultar a DLQ.
-    dead-letter-browse-limit: 100
-
-  # Estas propriedades funcionam como fallback.
-  # Durante o desenvolvimento, o Docker Compose Service Connection
-  # pode sobrescrevê-las automaticamente.
-  host: ${RABBITMQ_HOST:localhost}
-  port: ${RABBITMQ_PORT:5672}
-  username: ${RABBITMQ_USERNAME:rabbitrescue}
-  password: ${RABBITMQ_PASSWORD:rabbitrescue}
-  virtual-host: ${RABBITMQ_VHOST:rabbitrescue}
-
-  # Confirma se o broker recebeu realmente a publicação.
-  publisher-confirm-type: correlated
-
-  # Permite detectar mensagens que não encontraram nenhuma fila.
-  publisher-returns: true
-
-  template:
-    mandatory: true
+    template:
+      mandatory: true
 
 management:
   endpoints:
