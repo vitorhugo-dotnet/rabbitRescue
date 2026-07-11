@@ -96,56 +96,6 @@ public class RabbitMQConfig {
             "notifications.dead";
 
     /*
-     * Exchange principal usada para publicar novas mensagens
-     * e receber mensagens que retornam do retry.
-     */
-    public static final String NOTIFICATIONS_EXCHANGE =
-            "notifications.exchange";
-
-    /*
-     * Exchange usada para encaminhar mensagens para retry ou DLQ.
-     */
-    public static final String NOTIFICATIONS_DLX =
-            "notifications.dlx";
-
-    /*
-     * Fila principal consumida pelo MessageService.
-     */
-    public static final String NOTIFICATIONS_QUEUE =
-            "notifications.queue";
-
-    /*
-     * Fila temporária que mantém a mensagem durante o atraso do retry.
-     */
-    public static final String NOTIFICATIONS_RETRY_QUEUE =
-            "notifications.retry.queue";
-
-    /*
-     * Fila que armazena mensagens inválidas ou que excederam
-     * o limite máximo de tentativas.
-     */
-    public static final String NOTIFICATIONS_DLQ =
-            "notifications.dlq";
-
-    /*
-     * Routing key usada para enviar mensagens à fila principal.
-     */
-    public static final String NOTIFICATION_ROUTING_KEY =
-            "notifications.requested";
-
-    /*
-     * Routing key usada para enviar mensagens à fila de retry.
-     */
-    public static final String RETRY_ROUTING_KEY =
-            "notifications.retry";
-
-    /*
-     * Routing key usada para enviar mensagens definitivamente à DLQ.
-     */
-    public static final String DEAD_LETTER_ROUTING_KEY =
-            "notifications.dead";
-
-    /*
      * Header customizado que registra quantas tentativas
      * de processamento já foram realizadas.
      */
