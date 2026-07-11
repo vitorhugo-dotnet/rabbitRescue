@@ -1,0 +1,18 @@
+services:
+  k6:
+    image: grafana/k6:2.1.0
+    working_dir: /scripts
+    volumes:
+      - ./k6:/scripts:ro
+    environment:
+      BASE_URL: ${K6_BASE_URL:-http://host.docker.internal:8080}
+      RATE: ${K6_RATE:-}
+      DURATION: ${K6_DURATION:-}
+      PRE_ALLOCATED_VUS: ${K6_PRE_ALLOCATED_VUS:-}
+      MAX_VUS: ${K6_MAX_VUS:-}
+      SETTLE_SECONDS: ${K6_SETTLE_SECONDS:-}
+      VERIFY_ATTEMPTS: ${K6_VERIFY_ATTEMPTS:-}
+      VERIFY_INTERVAL_SECONDS: ${K6_VERIFY_INTERVAL_SECONDS:-}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    command: ["run", "/scripts/${K6_TEST:-smoke}.js"]
