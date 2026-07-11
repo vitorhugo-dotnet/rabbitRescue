@@ -157,10 +157,23 @@ public class DeadLetterService {
     }
 
     private NotificationRequested readEvent(GetResponse response) {
+        byte[] body = response.getBody();
+
+        if (body == null || body.length == 0) {
+            throw new IllegalStateException(
+                    "Mensagem da DLQ sem payload. messageId="
+                            + response.getProps().getMessageId()
+            );
+        }
+
         try {
-            return objectMapper.readValue(response.getBody(), NotificationRequested.class);
+            return objectMapper.readValue(body, NotificationRequested.class);
         } catch (IOException exception) {
-            throw new IllegalStateException("Payload inválido encontrado na DLQ", exception);
+            throw new IllegalStateException(
+                    "Payload inválido encontrado na DLQ. messageId="
+                            + response.getProps().getMessageId(),
+                    exception
+            );
         }
     }
 
