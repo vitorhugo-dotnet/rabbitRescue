@@ -15,6 +15,16 @@ app:
         timeout: 30s
 
 rabbitmq:
+  messaging:
+    # Tempo que a mensagem permanece na fila de retry antes de voltar.
+    retry-delay: 5s
+
+    # Total de processamentos, contando a primeira tentativa.
+    max-attempts: 3
+
+    # Quantidade máxima de mensagens retornadas ao consultar a DLQ.
+    dead-letter-browse-limit: 100
+
   # Estas propriedades funcionam como fallback.
   # Durante o desenvolvimento, o Docker Compose Service Connection
   # pode sobrescrevê-las automaticamente.
