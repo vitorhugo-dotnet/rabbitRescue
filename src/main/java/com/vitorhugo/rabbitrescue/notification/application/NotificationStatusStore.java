@@ -30,26 +30,35 @@ public class NotificationStatusStore {
         this.clock = clock;
     }
 
-
     /**
-     * Registra a publicação sem sobrescrever um estado mais novo que possa ter
-     * sido produzido pelo consumer extremamente rápido.
+     * Registra a publicação inicial sem sobrescrever um estado mais novo.
+     *
+     * O consumer pode ser rápido o suficiente para concluir ou mandar a
+     * mensagem à DLQ antes de requestNotification chamar este método.
+     * Portanto, qualquer estado já existente deve ser preservado.
      */
     public void markPublished(UUID messageId, String correlationId) {
+        states.putIfAbsent(
+                messageId,
+                publishedState(messageId, correlationId)
+        );
+    }
+
+    /**
+     * Reinicia explicitamente o acompanhamento de uma mensagem reenfileirada.
+     *
+     * Diferente da publicação inicial, o replay pode substituir somente o
+     * estado DEAD_LETTERED. Estados PROCESSING ou PROCESSED continuam intocados
+     * para não perder uma atualização produzida pelo consumer.
+     */
+    public void markReplayPublished(UUID messageId, String correlationId) {
         states.compute(messageId, (id, current) -> {
             if (current != null
                     && current.status() != NotificationStatus.DEAD_LETTERED) {
                 return current;
             }
 
-            return new NotificationProcessingState(
-                    messageId,
-                    correlationId,
-                    NotificationStatus.PUBLISHED,
-                    1,
-                    null,
-                    Instant.now(clock)
-            );
+            return publishedState(messageId, correlationId);
         });
     }
 
@@ -76,5 +85,19 @@ public class NotificationStatusStore {
 
     public void clear() {
         states.clear();
+    }
+
+    private NotificationProcessingState publishedState(
+            UUID messageId,
+            String correlationId
+    ) {
+        return new NotificationProcessingState(
+                messageId,
+                correlationId,
+                NotificationStatus.PUBLISHED,
+                1,
+                null,
+                Instant.now(clock)
+        );
     }
 }

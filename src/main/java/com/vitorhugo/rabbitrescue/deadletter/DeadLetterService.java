@@ -5,7 +5,6 @@ import static com.vitorhugo.rabbitrescue.notification.messaging.RabbitNames.HEAD
 import static com.vitorhugo.rabbitrescue.notification.messaging.RabbitNames.HEADER_ERROR_TYPE;
 import static com.vitorhugo.rabbitrescue.notification.messaging.RabbitNames.NOTIFICATIONS_DLQ;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.GetResponse;
@@ -110,15 +109,30 @@ public class DeadLetterService {
                     selected = response;
                     String correlationId = requireCorrelationId(response);
 
-                    // Publica primeiro e remove da DLQ somente após confirmação local
-                    // de que o RabbitTemplate aceitou a republicação.
+                    /*
+                     * Publica primeiro e remove da DLQ somente depois que a
+                     * republicação foi aceita localmente pelo RabbitTemplate.
+                     */
                     publisher.replay(event, correlationId);
                     channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
-                    statusStore.markPublished(event.messageId(), correlationId);
+
+                    /*
+                     * O replay é diferente da publicação inicial: aqui podemos
+                     * substituir explicitamente DEAD_LETTERED por PUBLISHED.
+                     */
+                    statusStore.markReplayPublished(
+                            event.messageId(),
+                            correlationId
+                    );
 
                     requeue(channel, untouchedTags);
                     untouchedTags.clear();
-                    return new ReplayResponse(event.messageId(), correlationId, "REPLAYED");
+
+                    return new ReplayResponse(
+                            event.messageId(),
+                            correlationId,
+                            "REPLAYED"
+                    );
                 }
 
                 untouchedTags.add(response.getEnvelope().getDeliveryTag());
@@ -129,7 +143,10 @@ public class DeadLetterService {
             if (selected != null) {
                 untouchedTags.add(selected.getEnvelope().getDeliveryTag());
             }
-            throw new AmqpException("Não foi possível reenfileirar a mensagem", exception);
+            throw new AmqpException(
+                    "Não foi possível reenfileirar a mensagem",
+                    exception
+            );
         } catch (RuntimeException exception) {
             if (selected != null) {
                 untouchedTags.add(selected.getEnvelope().getDeliveryTag());
@@ -180,7 +197,9 @@ public class DeadLetterService {
     private String requireCorrelationId(GetResponse response) {
         String correlationId = response.getProps().getCorrelationId();
         if (correlationId == null || correlationId.isBlank()) {
-            throw new IllegalStateException("Mensagem da DLQ sem correlationId");
+            throw new IllegalStateException(
+                    "Mensagem da DLQ sem correlationId"
+            );
         }
         return correlationId;
     }
